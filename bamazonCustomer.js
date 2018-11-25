@@ -44,36 +44,44 @@ function runPrompt() {
 
 // Checks if sufficient inventory, and if so, processes the purchase
 function processPurchase(productID, quantity) {
-    var query = "SELECT product_name,stock_quantity as num FROM products WHERE ?";
+    var query = "SELECT * FROM products WHERE ?";
     connection.query(query, { item_id: productID }, function(err, res) {
-        console.log("We have " + res[0].num + " units of " + res[0].product_name + " in stock.");
-        if (res[0].num >= quantity) subtractInventory(productID, quantity, res[0].num);
+        if (err || res === null || res.length === 0) {console.log("Unrecognized stock number."); runPrompt(); return;}
+        console.log("We have " + res[0].stock_quantity + " units of " + res[0].product_name + " in stock.");
+        if (res[0].stock_quantity >= quantity) subtractInventory(res[0], quantity);
         else {
-            console.log("Inventory insufficient: " + res[0].num + "\n\n");
+            console.log("Inventory insufficient: " + res[0].stock_quantity + "\n\n");
             runPrompt();
             }
     });
 };
 
-function subtractInventory(productID, quantity, currentQuantity) {
+function subtractInventory(product, quantity) {
+    console.log(product)
     var query = connection.query(
         "UPDATE products SET ? WHERE ?",
         [
           {
-            stock_quantity: (currentQuantity - quantity)
+            stock_quantity: (product.stock_quantity - quantity),
+            product_sales: product.product_sales + (product.price * quantity),
           },
           {
-            item_id: productID
+            item_id: product.item_id
           }
         ],
         function(err, res) {
+
+            if (err) {console.log(err); throw err;} 
           //console.log(res.affectedRows + " products updated!\n");
-          printReceipt(productID, quantity);
+          //console.log(res);
+          //console.log(res[0]);
+          printReceipt(product.item_id, quantity);
         }
     )
 };
 
 function printReceipt(productID, quantity) {
+    console.log("Refresh product object with item_id = " + productID);
     var query = "SELECT * FROM products WHERE ?";
     connection.query(query, { item_id: productID }, function(err, res) {
         var product = res[0];
@@ -92,7 +100,3 @@ function productSearch(productID) {
         return res[0];
     });
 };
-
-
-
-
