@@ -53,7 +53,7 @@ function runSupervisor() {
 // Print out a report of sales by department
 function viewProductSalesByDepartment() {
     console.log("Generating sales report...\n");
-    connection.query("select products.department_id, departments.department_name, sum(products.product_sales) as sales, departments.over_head_costs, (sum(products.product_sales)  - over_head_costs) as profit  from products right join departments on products.department_id = departments.department_id group by departments.department_id order by profit desc", function(err, res) {
+    connection.query("select departments.department_id, departments.department_name, sum(products.product_sales) as sales, departments.over_head_costs, (sum(products.product_sales)  - over_head_costs) as profit  from products right join departments on products.department_id = departments.department_id group by departments.department_id order by profit desc", function(err, res) {
       if (err) throw err;
       //console.log("Department Id | Department Name| Sales | Overhead Costs | Profit");
 
@@ -63,16 +63,17 @@ function viewProductSalesByDepartment() {
     var t = new Table;
  
 
-
+        
 
 
       for (var i = 0; i < res.length; i++) {
           var item = res[i];
           t.cell("Department Id", res[i].department_id);
           t.cell("Department Name", res[i].department_name);
-          t.cell("Sales", res[i].sales, Table.number(2));
+          t.cell("Sales", res[i].sales == null ? 0.00 : res[i].sales, Table.number(2));
           t.cell("Overhead Costs", res[i].over_head_costs, Table.number(2));
-          t.cell("Profit", res[i].profit, Table.number(2));
+    
+          t.cell("Profit", res[i].profit == null ? 0-res[i].over_head_costs : res[i].profit, Table.number(2));
           t.newRow();
           //console.log(res[i].department_id  + " | " + res[i].department_name  + " | " + res[i].sales + " | " + res[i].over_head_costs + " | " + res[i].sales + " | " + res[i].profit)
       }
